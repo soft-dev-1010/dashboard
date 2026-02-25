@@ -5,54 +5,51 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Setting extends Model
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\Image\Manipulations;
+use Spatie\Image\Enums\Fit;
+
+class Setting extends Model implements HasMedia
 {
     use HasFactory;
+    use InteractsWithMedia;
+    
     protected $guarded = ['id','created_at','updated_at'];
 
-    public function website_logo(){
-        if($this->website_logo==null)
-            return env('DEFAULT_IMAGE_LOGO');
-        else
-            return env('STORAGE_URL').'/uploads/website/'.$this->website_logo;
-    }
-    public function website_cover(){
-        if($this->website_cover==null)
-            return env('DEFAULT_IMAGE_COVER');
-        else
-            return env('STORAGE_URL').'/uploads/website/'.$this->website_cover;
-    }
-    public function website_wide_logo(){
-        if($this->website_wide_logo==null)
-            return env('DEFAULT_IMAGE_COVER');
-        else
-            return env('STORAGE_URL').'/uploads/website/'.$this->website_wide_logo;
-    }
-    public function website_icon(){
-        if($this->website_icon==null)
-            return env('DEFAULT_IMAGE_FAVICON');
-        else
-            return env('STORAGE_URL').'/uploads/website/'.$this->website_icon;
-    }
-    public function main_color(){
-        if($this->main_color==null)
-            return "#2196f3";
-        else
-            return $this->main_color;
-    }
-    public function hover_color(){
-        if($this->hover_color==null)
-            return "#2196f3";
-        else
-            return $this->hover_color;
-    }
-    public function phone(){
-        if($this->phone==null)
-            return "";
-        else
-            return $this->phone;
-    }
 
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this
+            ->addMediaConversion('icon')
+            ->fit(Fit::Max, 32, 32)
+            ->width(32)
+            ->format('webp')
+            ->nonQueued();
+
+        $this
+            ->addMediaConversion('tiny')
+            ->fit(Fit::Max, 120, 120)
+            ->width(120)
+            ->format('webp')
+            ->nonQueued();
+
+        $this
+            ->addMediaConversion('thumb')
+            ->fit(Fit::Max, 350, 1000)
+            ->width(350)
+            ->format('webp')
+            ->nonQueued();
+
+        $this
+            ->addMediaConversion('original')
+            ->fit(Fit::Max, 1200, 10000)
+            ->width(1200)
+            ->format('webp')
+            ->nonQueued();
+
+    }
     
 
 }

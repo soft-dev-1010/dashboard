@@ -4,6 +4,7 @@
     <div class="col-12 col-lg-12 p-0 ">
         <form id="validate-form" class="row" enctype="multipart/form-data" method="POST" action="{{route('admin.articles.store')}}">
             @csrf
+            <input type="hidden" name="temp_file_selector" id="temp_file_selector" value="{{uniqid()}}">
             <div class="col-12 col-lg-8 p-0 main-box">
                 <div class="col-12 px-0">
                     <div class="col-12 px-3 py-3">
@@ -24,11 +25,23 @@
                             </select>
                         </div>
                     </div>
+                    <div class="col-12 col-lg-6 p-2">
+                        <div class="col-12">
+                            الوسوم
+                        </div>
+                        <div class="col-12 pt-3">
+                            <select class="form-control select2-select" name="tag_id[]"  multiple size="1" style="height:30px;opacity: 0;">
+                                @foreach($tags as $tag)
+                                <option value="{{$tag->id}}">{{$tag->tag_name}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                     <div class="col-12">
                     </div>
                     <div class="col-12 col-lg-6 p-2">
                         <div class="col-12">
-                            الرابط عربي
+                            الرابط
                         </div>
                         <div class="col-12 pt-3">
                             <input type="text" name="slug" required maxlength="190" class="form-control" value="{{old('slug')}}">
@@ -36,7 +49,7 @@
                     </div>
                     <div class="col-12 col-lg-6 p-2">
                         <div class="col-12">
-                            العنوان عربي
+                            العنوان
                         </div>
                         <div class="col-12 pt-3">
                             <input type="text" name="title" required maxlength="190" class="form-control" value="{{old('title')}}">
@@ -47,30 +60,22 @@
                             الصورة الرئيسية
                         </div>
                         <div class="col-12 pt-3">
-                            <input type="file" name="main_image" class="form-control" accept="image/*">
+                            <input type="file" name="main_image" class="filepond" accept="image/*">
                         </div>
                         <div class="col-12 pt-3">
                         </div>
                     </div>
                     <div class="col-12  p-2">
                         <div class="col-12">
-                            الوصف عربي
+                            الوصف
                         </div>
                         <div class="col-12 pt-3">
                             <textarea name="description" class="editor with-file-explorer">{{old('description')}}</textarea>
                         </div>
                     </div>
-                    <div class="col-12  p-2">
-                        <div class="col-12">
-                            الوصف عربي
-                        </div>
-                        <div class="col-12 pt-3">
-                            <textarea name="description2" class="editor">{{old('description')}}</textarea>
-                        </div>
-                    </div>
                     <div class="col-12 p-2">
                         <div class="col-12">
-                            ميتا الوصف عربي
+                            ميتا الوصف
                         </div>
                         <div class="col-12 pt-3">
                             <textarea name="meta_description" class="form-control" style="min-height:150px">{{old('meta_description')}}</textarea>

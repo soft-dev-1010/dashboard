@@ -5,6 +5,7 @@
         <form id="validate-form" class="row" enctype="multipart/form-data" method="POST" action="{{route('admin.articles.update',$article)}}">
             @csrf
             @method("PUT")
+            <input type="hidden" name="temp_file_selector" id="temp_file_selector" value="{{uniqid()}}">
             <div class="col-12 col-lg-8 p-0 main-box">
                 <div class="col-12 px-0">
                     <div class="col-12 px-3 py-3">
@@ -21,6 +22,18 @@
                             <select class="form-control select2-select" name="category_id[]" required multiple size="1" style="height:30px;opacity: 0;">
                                 @foreach($categories as $category)
                                 <option value="{{$category->id}}" @if(in_array($category->id,$article->categories->pluck('id')->toArray())) selected @endif>{{$category->title}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 p-2">
+                        <div class="col-12">
+                            الوسوم
+                        </div>
+                        <div class="col-12 pt-3">
+                            <select class="form-control select2-select" name="tag_id[]" multiple size="1" style="height:30px;opacity: 0;">
+                                @foreach($tags as $tag)
+                                <option value="{{$tag->id}}" @if(in_array($tag->id,$article->tags->pluck('id')->toArray())) selected @endif>{{$tag->tag_name}}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -47,7 +60,7 @@
                             الصورة الرئيسية
                         </div>
                         <div class="col-12 pt-3">
-                            <input type="file" name="main_image" class="form-control" accept="image/*">
+                            <input type="file" name="main_image" class="filepond" accept="image/*">
                         </div>
                         <div class="col-12 pt-3">
                             <img src="{{$article->main_image()}}" style="width:100px">

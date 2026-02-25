@@ -22,8 +22,8 @@
         </div>
     </form>
 </div>
-<div class="col-12   row p-4" style="padding: 30px 0px;position: relative;background: #fff">
-    <table id="myTable" class="table table-striped table-bordered col-12 " style="padding: 0px;">
+<div class="col-12   row p-4" style="padding: 30px 0px;position: relative;background: #fff;overflow-x: auto;">
+    <table id="myTable" class="table table-striped table-bordered col-12 " style="padding: 0px;min-width: 1200px;">
         <thead>
             <tr>
                 <th style="font-size: 12px">id</th>
@@ -57,18 +57,22 @@
                     {{$traffic->id}}
                     @endif
                 </td>
+
                 <td style="font-size: 12px">
-                    <a href="{{$traffic->traffic_landing}}" target="_blank" data-container="body" data-toggle="popover" data-placement="top" data-content="{{$traffic->traffic_landing}}">
-                        {{
-                        substr(str_replace(env('APP_URL'),'W',$traffic->traffic_landing), 0, 20)
-                        }}
-                    </a>
-                </td>
-                <td style="font-size: 12px">
-                    <a href="{{$traffic->prev_link}}">
-                        {{$traffic->domain}}
-                    </a>
-                </td>
+                <a href="{{$traffic->traffic_landing}}" target="_blank" data-container="body" data-toggle="popover" data-placement="top" data-content="{{$traffic->user_agent}}"  >
+                  {{
+                    substr(str_replace(env('APP_URL'),'W/',$traffic->traffic_landing), 0, 20)
+                    }} 
+                </a>
+                 </td> 
+              <td style="font-size: 12px">
+                <a href="{{$traffic->prev_link}}">
+                    {{parse_url($traffic->prev_link)['host']}}
+                </a>
+              </td>
+
+
+           
                 <td style="font-size: 12px">{{$traffic->ip}}</td>
                 <td style="font-size: 9px;max-width: 100px;">
                     {{$traffic->device}}
@@ -77,7 +81,7 @@
                 <td style="font-size: 12px">{{$traffic->country_code}}</td>
                 <td style="font-size: 12px">{{$traffic->country_name}}</td>
                 <td style="font-size: 12px">
-                    <a href="{{route('admin.traffics.logs',$traffic)}}">
+                    <a href="{{route('admin.traffics.logs',['rate_limit_id'=>$traffic->id])}}">
                         <span style="width: 30px;height: 30px;background: #2381c6;color:#fff;border-radius: 50%" class="text-center d-inline-block font-3">
                             {{$traffic->details_count}}
                         </span>

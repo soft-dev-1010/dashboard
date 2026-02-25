@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        \App\Console\Commands\CreateDatabase::class
     ];
 
     /**
@@ -24,6 +24,14 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+
+        $schedule_controller = "\App\Http\Controllers\Backend\BackendScheduleController";
+
+        $schedule->call("$schedule_controller@update_traffics_country")->name("update_traffics_country")->withoutOverlapping()->everyMinute();
+        $schedule->call("$schedule_controller@update_under_attack")->name("update_under_attack")->withoutOverlapping()->everyFiveMinutes();
+
+        $schedule->call("$schedule_controller@clean_system")->daily();
+        $schedule->call("$schedule_controller@push_rate_limits")->everyMinute();
         // $schedule->command('inspire')->hourly();
     }
 
@@ -35,7 +43,6 @@ class Kernel extends ConsoleKernel
     protected function commands()
     {
         $this->load(__DIR__.'/Commands');
-
         require base_path('routes/console.php');
     }
 }

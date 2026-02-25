@@ -3,155 +3,162 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Laravel') }}</title>
-    <script src="{{ asset('js/app.js') }}" defer></script>
-
-  
+    <meta name="csrf-token" content="{{ csrf_token() }}">  
     @include('seo.index')
-    <link rel="stylesheet" type="text/css" href="https://nafezly.com/css/cust-fonts.css">
-    <link href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="https://nafezly.com/css/responsive-font.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.rtl.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pace-js@latest/pace-theme-default.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    <link rel="stylesheet"  href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0/dist/fancybox.css" />
+    
+    
 
-    <link rel="stylesheet" type="text/css" href="{{asset('/css/font-fileuploader.css')}}">
-    <link rel="stylesheet" type="text/css" href="{{asset('/css/jquery.fileuploader.min.css')}}">
-    <link rel="stylesheet" type="text/css" href="{{asset('/css/jquery.fileuploader-theme-dragdrop.css')}}">
-    <link rel="stylesheet" type="text/css" href="{{asset('/css/main.css')}}">
-    {!!$settings->header_code!!}
+    {!!implode(' ',$website_plugins->whereNotNull('header_code')->pluck('header_code')->toArray())!!}
+    {!!$settings['header_code']!!}
+
     @livewireStyles
     @if(auth()->check())
         @php
         if(session('seen_notifications')==null)
             session(['seen_notifications'=>0]);
-        $notifications=auth()->user()->notifications()->orderBy('created_at','DESC')->limit(50)->get();
-        $unreadNotifications=auth()->user()->unreadNotifications()->count();
+        $notifications=cache()->remember('notifications_of_user_'.auth()->user()->id,60,function(){
+            return auth()->user()->notifications()->orderBy('created_at','DESC')->limit(50)->get();
+        });
+        $unreadNotifications=cache()->remember('unreadNotifications_of_user_'.auth()->user()->id,60,function(){
+            return auth()->user()->unreadNotifications()->count();
+        });
         @endphp
     @endif
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    @vite('resources/css/app.css')
+    {{-- <link href="{{ asset('css/app.css') }}" rel="stylesheet"> --}}
     <style type="text/css">
-        body,*{
-            direction: rtl;
-            text-align: start;
-            
+        body {
+            --bg-main: #fff;
+            --bg-second: #f4f4f4;
+            --font-1: #333333;
+            --font-2: #555555;
+            --border-color: #dddddd;
+            --main-color: #7b60fb;
+            --main-color-rgb: 1,148,254;
+            --main-color-flexable: #7b60fb;
+            --scroll-bar-color: #d1d1d1;
         }
-        html{
-            font-size: 16px;
+        body.night {
+            --bg-main: #1c222b;
+            --bg-second: #131923;
+            --font-1: #fff;
+            --font-2: #e3e3e3;
+            --border-color: #33343b;
+            --main-color: #7b60fb;
+            --main-color-rgb: 1,148,254;
+            --main-color-flexable: #15202b;
+            --scroll-bar-color: #505050;
         }
-        /**:not(.fileuploader):not([class^=fa]):not([class^=vj]):not([class^=tie-]) {
-            font-family: dubai, sans-serif;
-        }*/
-        .start-head {
-            height: 20px;
-            width: 12px;
-            display: inline-block;
-            background: #0194fe;
-            position: relative;
-            top: 5px;
-            margin-left: 5px;
-        }
-        .main-box-stylex{
-            box-shadow: 0 8px 16px 0 rgb(10 14 29 / 2%), 0 8px 64px 0 rgb(119 119 119 / 8%);
-        }
+        
     </style>
     @yield('styles')
 </head>
-<body>
+<body style="background:#eef4f5;" class="body">
+    <style type="text/css">
+        #toast-container>div {
+            opacity: 1;
+        }
+        .fl-wrapper{
+            z-index:999999!important;
+        }
+    </style>
     @yield('after-body')
     <div id="app">
-        <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm" id="navbar">
-            <div class="container">
-                <a class="navbar-brand" href="{{ url('/') }}">
-                    {{ config('app.name', 'Laravel') }}
-                </a>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <!-- Left Side Of Navbar -->
-                    <ul class="navbar-nav me-auto">
-
-                    </ul>
-
-                    <!-- Right Side Of Navbar -->
-                    <ul class="navbar-nav ms-auto">
-                        <!-- Authentication Links -->
-                        @guest
-                            @if (Route::has('login'))
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('login') }}">دخول</a>
-                                </li>
-                            @endif
-                            
-                            @if (Route::has('register'))
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('register') }}">تسجيل</a>
-                                </li>
-                            @endif
-                        @else
-                            <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                    {{ Auth::user()->name }}
-                                </a>
-
-                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item" href="{{ route('admin.index') }}">
-                                        لوحة التحكم
-                                    </a>
-
-                                    <a class="dropdown-item" href="{{ route('logout') }}"
-                                       onclick="event.preventDefault();document.getElementById('logout-form').submit();">
-                                        تسجيل خروج
-                                    </a>
-
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                        @csrf
-                                    </form>
-                                </div>
-                            </li>
-                        @endguest
-                    </ul>
-                </div>
-            </div>
-        </nav>
-        @if(flash()->message)
-            <div style="position: absolute;z-index: 4444444444444;left: 35px;top: 80px;max-width: calc(100% - 70px);padding: 16px 22px;border-radius: 7px;overflow: hidden;width: 273px;border-right: 8px solid #374b52;background: #2196f3;color: #fff;cursor: pointer;"  onclick="$(this).slideUp();">
-                <span class="fas fa-info-circle"></span> {{ flash()->message }} 
-            </div>
-        @endif 
-        <div class="col-12 justify-content-end d-flex">
-            @if($errors->any())
-            <div class="col-12" style="position: absolute;top: 80px;left: 10px;">
-                {!! implode('', $errors->all('<div class="alert-click-hide alert alert-danger alert alert-danger col-9 col-xl-3 rounded-0 mb-1" style="position: fixed!important;z-index: 11;opacity:.9;left:25px;cursor:pointer;" onclick="$(this).fadeOut();">:message</div>')) !!}
-            </div>
-            @endif
-        </div>
-        
-
-        <main class="p-0">
+        {{-- <div class="page-loader"></div> --}}
+        <div id="body-overlay"onclick="document.getElementById('aside-menu').classList.toggle('active');document.getElementById('body-overlay').classList.toggle('active');"></div>
+        <x-navbar :notifications="$notifications??[]" :unreadNotifications="$unreadNotifications??[]" />
+        <main class="p-0 font-2">
             @yield('content')
         </main>
+        <x-footer />
     </div>
 
-    <input type="hidden" id="current_selected_editor">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pace-js@latest/pace.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" ></script>
-    <script src="https://cdn.ckeditor.com/ckeditor5/29.2.0/classic/ckeditor.js"></script>
-    
-    <script src="{{asset('/js/jquery.fileuploader.min.js')}}"></script>
-    <script src="{{asset('/js/validatorjs.min.js')}}"></script>
-    <script src="{{asset('/js/favicon_notification.js')}}"></script>
-    <script src="{{asset('/js/main.js')}}"></script>
+
+    @vite('resources/js/app.js')
     @livewireScripts
     @include('layouts.scripts')
+    @auth
+    <script type="module">
+        var favicon = new Favico({bgColor: '#dc0000',textColor: '#fff',animation: 'slide',fontStyle: 'bold',fontFamily: 'sans',type: 'circle'});
+        function get_website_title(){
+            return $('meta[name="title"]').attr('content');
+        }
+        var notificationDropdown = document.getElementById('notificationDropdown')
+        notificationDropdown.addEventListener('show.bs.dropdown', function() {
+            $.ajax({
+                method: "POST",
+                url: "{{route('admin.notifications.see')}}",
+                data: { _token: "{{csrf_token()}}" }
+            }).done(function(res) {
+                $('#dropdown-notifications-icon').fadeOut();
+                favicon.badge(0);
+            });
+        });
+        function append_notification_notifications(msg) {
+            if (msg.count_unseen_notifications > 0) {
+                $('#dropdown-notifications-icon').fadeIn(0);
+                $('#dropdown-notifications-icon').text(msg.count_unseen_notifications);
+            } else {
+                $('#dropdown-notifications-icon').fadeOut(0);
+                favicon.badge(0);
+            }
+            $('.notifications-container').empty();
+            $('.notifications-container').append(msg.response);
+            $('.notifications-container a').on('click', function() { window.location.href = $(this).attr('href'); });
+        } 
+        function get_notifications() {
+            $.ajax({
+                method: "GET",
+                url: "{{route('admin.notifications.ajax')}}", 
+                success: function(data, textStatus, xhr) {
+
+                    favicon.badge(data.notifications.response.count_unseen_notifications);
+
+                    if (data.alert) {
+                        var audio = new Audio('{{asset("/sounds/notification.wav")}}');
+                        audio.play();
+                    }  
+                    append_notification_notifications(data.notifications.response); 
+                    if (data.notifications.response.count_unseen_notifications > 0) {
+                        $('title').text('(' + parseInt(data.notifications.response.count_unseen_notifications) + ')' + " " +  
+                        get_website_title());
+
+                    } else {
+                        $('title').text(get_website_title());
+                    }
+                }
+            });
+        } 
+        window.focused = 25000;
+        window.onfocus = function() {
+            get_notifications(); 
+            window.focused = 25000;
+        };
+        window.onblur = function() {
+            window.focused = 60000;
+        }; 
+        function get_nots() {
+            setTimeout(function() { 
+                get_notifications();
+                get_nots();
+            }, window.focused);
+        }
+        get_nots();
+
+        @if($unreadNotifications!=session('seen_notifications') && $unreadNotifications!=0)
+            @php
+            session(['seen_notifications'=>$unreadNotifications]);
+            @endphp
+            var audio = new Audio('{{asset("/sounds/notification.wav")}}');
+            audio.play();
+        @endif
+    </script>
+    @endauth
     @yield('scripts')
-    {!!$settings->footer_code!!}
+    
+    {!!implode(' ',$website_plugins->whereNotNull('footer_code')->pluck('footer_code')->toArray())!!}
+    {!!$settings['footer_code']!!}
+
+    @include('plugins-views.general_popup')
 </body>
 </html>

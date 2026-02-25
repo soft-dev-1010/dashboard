@@ -1,8 +1,19 @@
-@extends('layouts.app')
+@extends('layouts.app',['title'=>"الرئيسية"])
 @section('content')
-<div class="col-12 p-0">
-	<div class="col-12 d-flex justify-content-center align-items-center font-5" style="height:90vh">
-		مرحباً
-	</div>
+@php
+$page = cache()->remember('page_home',60,function(){
+    return \App\Models\Page::where('home',1)->firstOrFail();
+});
+@endphp
+<div class="col-12 p-0 ">
+  @if(is_countable(json_decode($page->content,true)))
+  @foreach(\MainHelper::arrayToObject(json_decode($page->content,true)) as $component)
+  @include('components.component-render',['page'=>$page,'component'=>$component])
+  @endforeach
+  @endif
 </div>
 @endsection
+
+
+
+

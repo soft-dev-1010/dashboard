@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Validator;
 use Intervention\Image\ImageManager;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Http\Request;
+use App\Models\HubFile;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use ImageOptimizer;
@@ -21,7 +23,7 @@ class UploadFilesHelper
     public static function __callStatic($name,$args){
 
     }
-
+    
     public static function url_to_uploaded_file($file,$filename=null){
         $fileData = $file;
         $name= $filename==null?Str::uuid()->toString():$filename;
@@ -112,8 +114,8 @@ class UploadFilesHelper
                     "old_name"=>"ملف",
                     "old_title"=>"ملف",
                     "replaced"=>false,
-                    "size"=>$file->getSize(),
-                    "size2"=>"$file->getSize() KB",
+                    "size"=>"0",
+                    "size2"=>"0 KB",
                     "title"=>$filename,
                     "type"=>$file->getMimeType(),
                     "uploaded"=>true
@@ -152,17 +154,18 @@ class UploadFilesHelper
         $options = array_merge([
             //'source'=>"",
             'validation'=>"file",
-            'path_to_save'=>'/uploads/files/',
+            //'path_to_save'=>'/uploads/files/',
             'type'=>'',
             'type_id'=>"",
             'user_id'=>NULL,
-            'resize'=>[400,15000],
-            'small_path'=>'small/',
-            'visibility'=>'PUBLIC',
-            'file_system_type'=>env('FILESYSTEM_DRIVER','s3'),
-            'optimize'=>false,
-            'new_extension'=>"",
-            'used_at'=>NULL,
+            'temp_file_selector'=>uniqid()
+            //'resize'=>[400,1200],
+            //'small_path'=>'small/',
+            //'visibility'=>'PUBLIC',
+            //'file_system_type'=>env('FILESYSTEM_DRIVER','s3'),
+            //'optimize'=>true,
+            //'new_extension'=>"webp",
+            //'used_at'=>NULL,
         ],$options);
 
         $validation=Validator::make($options, [ 'source' => "required|mimes:".self::get_validations($options["validation"])."|max:250000"]);  if($validation->fails()) {
@@ -170,75 +173,56 @@ class UploadFilesHelper
         }
         $user_id        = $options['user_id'];
         $file           = $options["source"];
-        $path           = $options["path_to_save"]; // '/uploads/files/temp/';
-        $path_small     = $options["path_to_save"] . $options["small_path"];
-        $old_size       = $file->getSize();
-        $new_size       = "";
-        $original_name  = $file->getClientOriginalName();
-        $extension = $options['new_extension']==""?$file->extension():$options['new_extension'];
-        $filename = self::generate_unique_filename($file,$options);
-        $file_system_type=$options["file_system_type"];
+        //$path           = $options["path_to_save"]; // '/uploads/files/temp/';
+        //$path_small     = $options["path_to_save"] . $options["small_path"];
+        //$old_size       = $file->getSize();
+        //$new_size       = "";
+        //$original_name  = $file->getClientOriginalName();
+        //$extension = $options['new_extension']==""?$file->extension():$options['new_extension'];
+
+/*120
+350
+1200*/
 
 
-
-        //dd('/'.strtolower($options['visibility']) . $path . $filename, $file);
-        if(null != $options["resize"] && $options['validation']=="image" ){
-
-            $manager_sm  = new ImageManager(['driver' => 'imagick']);
-            $image_sm    = $manager_sm->make($file);
-            if(isset($options["resize"][0]))
-                $image_sm = \Image::make($image_sm)->resize($options["resize"][0], null, function ($constraint) {
-                    $constraint->aspectRatio();
-                    $constraint->upsize();
-                })->encode($extension);
-            $image_sm->stream();
-
-
-            $manager_lg = new ImageManager(['driver' => 'imagick']);
-            $image_lg   = $manager_lg->make($file);
-            if(isset($options["resize"][1]))
-                $image_lg = \Image::make($image_lg)->resize($options["resize"][1], null, function ($constraint) {
-                    $constraint->aspectRatio();
-                    $constraint->upsize();
-                })->encode($extension);
-            $image_lg->stream();
-
+        $temp_file = \App\Models\TempFile::create(['name'=>$options['temp_file_selector'],'user_id'=>auth()->check()?auth()->id():null]);
+        $uploaded_file = $temp_file->addMedia($file)->toMediaCollection($options['type']);
+ /*       dd($uploaded_file);
  
-            if(isset($options['optimize']) && $options['optimize']==true){
-                $quality=90;
-                if($image_lg->width()>=3000)
-                    $quality=30;
-                else if ($image_lg->width()<3000 && $image_lg->width()>=2000)
-                    $quality=40;
-                else if ($image_lg->width()<2000 && $image_lg->width()>=1000)
-                    $quality=50;
-                else
-                    $quality=60;
 
-                $imagick = new \Imagick();
-                $imagick->readImageBlob($image_lg);
-                $imagick->setImageCompressionQuality($quality);
-                $image_lg = $imagick->getImageBlob();
+        if($options['validation']=="image" && $options['optimize']==true ){
+
+            $image_sm = (new ImageManager('imagick'))->make($file->getContent())->scaleDown(width:$options["resize"][0]);
+            $image_lg = (new ImageManager('imagick'))->make($file->getContent())->scaleDown(width:$options["resize"][1]);
+
+            if(in_array($options['new_extension'], ['webp','jpeg','jpg','png','gif'])){
+                if($options['new_extension']=="webp"){
+                    $image_sm=$image_sm->toWebp(75)->toString();
+                    $image_lg=$image_lg->toWebp(75)->toString();
+                }elseif(in_array($options['new_extension'],['jpeg','jpg'])){
+                    $image_sm=$image_sm->toJpeg(75)->toString();
+                    $image_lg=$image_lg->toJpeg(75)->toString();
+                }elseif($options['new_extension']=="png"){
+                    $image_sm=$image_sm->toPng(75)->toString();
+                    $image_lg=$image_lg->toPng(75)->toString();
+                }elseif($options['new_extension']=="gif"){
+                    $image_sm=$image_sm->toGif(75)->toString();
+                    $image_lg=$image_lg->toGif(75)->toString();
+                }
+            }else{
+                $image_sm=$image_sm->toWebp(75)->toString();
+                $image_lg=$image_lg->toWebp(75)->toString();
             }
-
-
-
-
- 
-          /*  $optimizerChain = OptimizerChainFactory::create();
-            $test= $optimizerChain->optimize($file);
-            dd($test);*/
-
-         
 
             try{ \Storage::disk($options["file_system_type"])->put(strtolower($options['visibility']) .$path_small .$filename, $image_sm , $filename);}catch(\Exception $e){}
             try{\Storage::disk($options["file_system_type"])->put(strtolower($options['visibility']) . $path .$filename, $image_lg); }catch(\Exception $e){}
 
         }else{ 
+           
             try{\Storage::disk($options["file_system_type"])->putFileAs(strtolower($options['visibility']) . $path  , $file , $filename);}catch(\Exception $e){}
-        }
+        }*/
 
-        $stored_data = \App\Models\HubFile::create(
+/*        $stored_data = \App\Models\HubFile::create(
             [
                 'user_id'       => $user_id,
                 'path'          => $options["path_to_save"],
@@ -247,34 +231,20 @@ class UploadFilesHelper
                 'getMimeType'   => $file->getMimeType(),
                 'type'          => $options["type"],
                 'name'          => $filename,
-                'ip'            => \UserSystemInfoHelper::get_ip(),
-                'user_agent'    => \UserSystemInfoHelper::get_user_agent(),
                 'original_name' => $file->getClientOriginalName(),
                 'visibility'    => $options["visibility"],
                 'bucket_name'   => $options["file_system_type"],
                 'used_at'       => $options['used_at'],
-                'unique_name'   => substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 5)
             ]
-        ); 
-        if(isset($options['optimize']) && $options['optimize']==true){
-            $optimizerChain = OptimizerChainFactory::create();
-            //$test = $optimizerChain->optimize($stored_data->get_real_url());
-            //dd($test);
-            #ImageOptimizer::optimize($stored_data->get_path()); 
-        }
-
+        );  
+*/
 
         return [
             'success'  => true, 
-            'filename' => $filename,
-            'link'     => $stored_data->get_url(),
-            'old_size' =>self::formatSizeUnits($old_size),
-            'new_size' =>self::formatSizeUnits(
-
-                //\File::size( strtolower($options['visibility']).$path . $filename )
-
-                \Storage::disk($options["file_system_type"])->size(strtolower($options['visibility']).$path . $filename  )
-            ),
+            'filename' => $uploaded_file->file_name,
+            'link'     => $uploaded_file->getFullUrl(),
+            'old_size' => $uploaded_file->size,
+            'new_size' =>self::formatSizeUnits($uploaded_file->size),
             'saved'    =>"",
             "hasWarnings"=>false,
             "isSuccess"=>true,
@@ -282,17 +252,17 @@ class UploadFilesHelper
             "files"=>[
                 [
                     "date"=>date('Y-m-d h:i:s'),
-                    "extension"=>$file->extension(),
-                    "file"=>$filename,
+                    "extension"=>$uploaded_file->mime_type,
+                    "file"=>$uploaded_file->file_name,
                     "format"=>"application",
-                    "name"=>$filename,
+                    "name"=>$uploaded_file->file_name,
                     "old_name"=>"ملف",
                     "old_title"=>"ملف",
                     "replaced"=>false,
-                    "size"=>$file->getSize(),
-                    "size2"=>$file->getSize(),
-                    "title"=>$filename,
-                    "type"=>$file->getMimeType(),
+                    "size"=>$uploaded_file->size,
+                    "size2"=>$uploaded_file->size,
+                    "title"=>$uploaded_file->file_name,
+                    "type"=>$uploaded_file->mime_type,
                     "uploaded"=>true
                 ]
             ]
@@ -314,5 +284,47 @@ class UploadFilesHelper
         }
         return ['success' => false, 'filename' => $name];
     }
-    
+
+
+    public static function get_private_file(Request $request,HubFile $file){
+        if(!self::has_access_to_get_private_file($file))abort(403);
+        return redirect($file->get_temp_url());
+
+        dd($file);
+
+        $video=\App\Models\Video::where('url',$request->path)->firstOrFail();
+        if($video->cost_type=="FREE"){
+            
+        }
+        if($file->visibility=="PRIVATE") {
+            if(\Auth::check() && (\Auth::user()->hasRole("ADMIN") || $file->user_id == \Auth::user()->id ) )
+            {  
+                return redirect(Storage::disk($file->bucket_name)->temporaryUrl(
+                    substr($file->path, 1) .$file->name ,
+                    now()->addHour()
+                ));  
+            }
+            else if($file->type=="ticket_message"){
+                  if(\Auth::check()){
+                        $tm = \App\TicketMessage::where('id',$file->type_id)->firstOrFail(); 
+                        if(\Auth::user()->hasRole("ADMIN") || $tm->ticket->user_id==\Auth::id()){
+                              return redirect(Storage::disk($file->bucket_name)->temporaryUrl(
+                                substr($file->path, 1) .$file->name ,
+                                now()->addHour()
+                            )); 
+                        }
+                  }
+            }
+            abort(403);
+           
+        }else if($file->visibility=="PUBLIC"){
+            
+        }else{
+            abort(403);
+        }
+
+    } 
+    public static function has_access_to_get_private_file(HubFile $file){
+        return 1;
+    }
 }

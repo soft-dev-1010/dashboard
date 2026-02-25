@@ -6,11 +6,21 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\Image\Manipulations;
+use Spatie\Image\Enums\Fit;
+
+
+class User extends Authenticatable implements HasMedia
 {
+    use HasRoles;
     use HasFactory;
     use Notifiable;
+    use InteractsWithMedia;
     /**
      * The attributes that are mass assignable.
      *
@@ -50,11 +60,11 @@ class User extends Authenticatable
     ];*/
 
 
-    public function getUserAvatar(){
+    public function getUserAvatar($type="thumb"){
         if($this->avatar==null)
             return env('DEFAULT_IMAGE_AVATAR');
         else
-            return env('STORAGE_URL').'/uploads/users/'.$this->avatar;
+            return env("STORAGE_URL").'/'.\MainHelper::get_conversion($this->avatar,$type);
     }
     
     public function scopeWithoutTimestamps()
@@ -62,38 +72,61 @@ class User extends Authenticatable
         $this->timestamps = false;
         return $this;
     }
+    public function contacts(){
+        return $this->hasMany(\App\Models\Contact::class);
+    }
+    public function articles(){
+        return $this->hasMany(\App\Models\Article::class);
+    }
+    public function comments(){
+        return $this->hasMany(\App\Models\ArticleComment::class);
+    }
+    public function traffics(){
+        return $this->hasMany(\App\Models\RateLimit::class);
+    }
+    public function logs(){
+        return $this->hasMany(\App\Models\RateLimitDetail::class,'user_id');
+    }
+    public function report_errors(){
+        return $this->hasMany(\App\Models\ReportError::class);
+    }
 
-    public function has_access_to($action , $item){
-        /*
-        create
-        read
-        update
-        delete
-        */
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this
+            ->addMediaConversion('tiny')
+            ->fit(Fit::Max, 120, 120)
+            ->width(120)
+            ->format('webp')
+            ->nonQueued();
 
-        if(!($item   instanceof \Illuminate\Database\Eloquent\Model )) return 0;
+        $this
+            ->addMediaConversion('thumb')
+            ->fit(Fit::Max, 350, 1000)
+            ->width(350)
+            ->format('webp')
+            ->nonQueued();
 
-        if(auth()->user()->power == "ADMIN"){
-            return 1 ;
-        }elseif(auth()->user()->power == "EDITOR"){
-
-            if($item->getTable()=="users") 
-                return 0;
-            if($item->getTable()=="contacts") 
-                return 0;
-            return 1;
-
-        }elseif(auth()->user()->power == "CONTRIBUTOR"){
-           
-           if($item->getTable()=="users") 
-                return 0;
-           if($item->user_id == auth()->user()->id)
-                return 1;
-           else
-                return 0;
-        }
+        $this
+            ->addMediaConversion('original')
+            ->fit(Fit::Max, 1200, 10000)
+            ->width(1200)
+            ->format('webp')
+            ->nonQueued();
 
     }
-    
+
+    public function is_online(){
+        if($this->last_activity<\Carbon::now()->subMinutes(10)->format('Y-m-d H:i:s'))
+            return 0;return 1;
+        //return $this->last_activity;
+    }
+
+
+    public function item_seens()
+    {
+        return $this->hasMany(\App\Models\ItemSeen::class,'type_id','id')->where('type',"USER");
+    }
+
 
 }

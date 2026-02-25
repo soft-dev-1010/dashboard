@@ -1,24 +1,22 @@
 @php 
 $website_settings=[
     'website_url'=>env('APP_URL'),
-    'website_name'=>$settings->website_name,
-    'main_color'=>"#0172b8",
-    'second_color'=>"#d6e0ea",
+    'website_name'=>$settings['website_name'],
+    'main_color'=>$settings['main_color'],
+    'second_color'=>$settings['hover_color'],
     'social_links'=>[
-        'facebook_link'=>"",
-        'twitter_link'=>"",
-        'instagram_link'=>"",
-        'youtube_link'=>"",
-        'telegram_link'=>"",
-        'linkedin_link'=>"",
-        'whatsapp_link'=>"",
-        'tiktok_link'=>"",
+        'facebook_link'=>$settings['facebook_link'],
+        'twitter_link'=>$settings['twitter_link'],
+        'instagram_link'=>$settings['instagram_link'],
+        'youtube_link'=>$settings['youtube_link'],
+        'linkedin_link'=>$settings['linkedin_link'],
+        'tiktok_link'=>$settings['tiktok_link']
     ],
-    'website_icon'=>$settings->website_icon()/*"data:image/png;base64,". base64_encode(file_get_contents($settings->website_icon()))*/, //lite
-    'website_icon_url'=>$settings->website_icon(), //lite
-    'website_logo'=>$settings->website_logo(), //lite
-    'website_cover'=>$settings->website_cover(),  //lite
-    'phone'=>$settings->phone(),
+    'website_icon'=>$settings['get_website_icon']/*"data:image/png;base64,". base64_encode(file_get_contents($settings->website_icon()))*/, //lite
+    'website_icon_url'=>$settings['get_website_icon'], //lite
+    'website_logo'=>$settings['get_website_logo'], //lite
+    'website_cover'=>$settings['get_website_cover'],  //lite
+    'phone'=>$settings['phone'],
     'search_url'=>env('APP_URL')."/q",
     'faq_url'=>env('APP_URL')."/faq",
     'feed_url'=>env('APP_URL')."/feed",
@@ -32,17 +30,18 @@ if(request()->url()==env("APP_URL"))
 $page_title=  isset($page_title)&&$page_title !=null?$website_settings['website_name'] .' | '. $page_title :$website_settings['website_name'];
 else
 $page_title=  isset($page_title)&&$page_title !=null?$page_title.' | '.$website_settings['website_name']:$website_settings['website_name'];
-$page_description=isset($seo_meta_description)&&$seo_meta_description !=null?$seo_meta_description:$website_settings['website_name'];
+$page_description=isset($page_description)&&$page_description !=null?$page_description:$website_settings['website_name'];
 $page_image= isset($page_image)&&$page_image !=null?$page_image:$website_settings['website_cover'];
 $page_keywords= isset($seo_key_words)&&$seo_key_words !=null? $seo_key_words:"";
 $website_settings['canonical']= isset($canonical) && $canonical!=null ? $canonical:$website_settings['canonical'];
 @endphp
 <title>{{$page_title}}</title>
+<meta name="title" content="{{$page_title}}">
 <!---
 وَما نَيلُ المَطالِبِ بِالتَمَنّي وَلَكِن تُؤخَذُ الدُنيا غِلاباوَ
 ما اِستَعصى عَلى قَومٍ مَن الٌإِذا الإِقدامُ كانَ لَهُم رِكابا
 أحمد شوقي
---->
+---> 
 <link rel="icon" type="image/png" href="{{$website_settings['website_icon']!=null?$website_settings['website_icon']:$website_settings['website_icon_url']}}" /> 
 <link rel="icon" type="image/png" sizes="512x512" href="{{$website_settings['website_icon']!=null?$website_settings['website_icon']:$website_settings['website_icon_url']}}" />
 <link rel="manifest" href="{{$website_settings['website_url']}}/manifest.json">
@@ -121,76 +120,63 @@ $website_settings['canonical']= isset($canonical) && $canonical!=null ? $canonic
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="-1">
 @endif
-<script type="application/ld+json">
-{
-    "@context": "http://schema.org",
-    "@type": "Organization",
-    "name": "{{$website_settings['website_name']}}",
-    "url": "{{$website_settings['website_url']}}",
-    "logo": "{{$website_settings['website_icon_url']}}",
-    @php
-    $social_links=[];
-    foreach($website_settings['social_links'] as $key => $link){
-        if($link!=null)array_push($social_links, $link);
-    }
-    @endphp
-    @if(count($social_links))
-    "sameAs": [
-       
-        @foreach($social_links as $link)
-            "{{$link}}" 
-            @if(!$loop->last),@endif
-        @endforeach
+
+@php
+$social_links=[];
+foreach($website_settings['social_links'] as $key => $link)
+    if($link!=null)array_push($social_links, $link);
+@endphp
+
+@php
+$structuredData = [
+    [
+        "@context" => "http://schema.org",
+        "@type" => "Organization",
+        "name" => $website_settings['website_name'],
+        "url" => $website_settings['website_url'],
+        "logo" => $website_settings['website_icon_url'],
+        "sameAs" => array_values(array_filter($website_settings['social_links'])),
+        "contactPoint" => [
+            [
+                "@type" => "ContactPoint",
+                "telephone" => $website_settings['phone'],
+                "contactType" => "customer support"
+            ],
+            [
+                "@type" => "ContactPoint",
+                "telephone" => $website_settings['phone'],
+                "contactType" => "technical support"
+            ],
+            [
+                "@type" => "ContactPoint",
+                "telephone" => $website_settings['phone'],
+                "contactType" => "billing support"
+            ]
+        ]
     ],
-    @endif
-    "contactPoint": [
-        @if($website_settings['phone']!=null)
-        {
-            "@type": "ContactPoint",
-            "telephone": "{{$website_settings['phone']}}",
-            "contactType": "customer support"
-        },
-        {
-            "@type": "ContactPoint",
-            "telephone": "{{$website_settings['phone']}}",
-            "contactType": "technical support"
-        }, {
-            "@type": "ContactPoint",
-            "telephone": "{{$website_settings['phone']}}",
-            "contactType": "billing support"
-        }
-        @endif
+    [
+        "@context" => "http://schema.org",
+        "@type" => "WebSite",
+        "url" => $website_settings['website_url'],
+        "potentialAction" => [
+            "@type" => "SearchAction",
+            "target" => $website_settings['search_url'] . "?key={search_term_string}",
+            "query-input" => "required name=search_term_string"
+        ]
+    ],
+    [
+        "@context" => "https://schema.org",
+        "@type" => "WebPage",
+        "name" => $page_title,
+        "description" => $page_description,
+        "publisher" => [
+            "@type" => "Organization",
+            "name" => $website_settings['website_name']
+        ]
     ]
-}
-{
-    "@context": "http://schema.org",
-    "@type": "WebSite",
-    "url": "{{$website_settings['website_url']}}",
-    "potentialAction": {
-        "@type": "SearchAction",
-        "target": "{{$website_settings['search_url']}}?key={search_term_string}",
-        "query-input": "required name=search_term_string"
-    }
-}
-{
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "name": "{{$page_title}}",
-    "description": "{{$page_description}}",
-    "publisher": {
-        "@type": "Organization",
-        "name": "{{$website_settings['website_name']}}"
-    }
-}
-</script>
-<script type="text/javascript">
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/serviceworker.js', {
-            scope: '.'
-        }).then(function (registration) { 
-            console.log('Laravel PWA: ServiceWorker registration successful with scope: ', registration.scope);
-        }, function (err) { 
-            console.log('Laravel PWA: ServiceWorker registration failed: ', err);
-        });
-    }
+];
+@endphp
+
+<script type="application/ld+json">
+{!! json_encode($structuredData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}
 </script>

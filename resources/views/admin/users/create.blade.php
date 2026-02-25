@@ -1,6 +1,14 @@
 @extends('layouts.admin')
 @section('content')
 <div class="col-12 p-3">
+		<!-- breadcrumb -->
+		<x-bread-crumb :breads="[
+			['url' => url('/admin') , 'title' => 'لوحة التحكم' , 'isactive' => false],
+			['url' => route('admin.users.index') , 'title' => 'المستخدمين' , 'isactive' => false],
+			['url' => '#' , 'title' =>  'اضافة مستخدم', 'isactive' => true],
+		]">
+		</x-bread-crumb>
+	<!-- /breadcrumb -->
 	<div class="col-12 col-lg-12 p-0 ">
 	 
 		
@@ -14,10 +22,10 @@
 				</div>
 				<div class="col-12 divider" style="min-height: 2px;"></div>
 			</div>
-			<div class="col-12 p-3">
+			<div class="col-12 p-3 row">
 				
 			
-			<div class="col-12 p-2">
+			<div class="col-12 col-lg-6 p-2">
 				<div class="col-12">
 					الاسم
 				</div>
@@ -26,7 +34,7 @@
 				</div>
 			</div>
 			
-			<div class="col-12 p-2">
+			<div class="col-12 col-lg-6 p-2">
 				<div class="col-12">
 					البريد
 				</div>
@@ -34,7 +42,7 @@
 					<input type="email" name="email"  class="form-control"  value="{{old('email')}}" >
 				</div>
 			</div>
-			<div class="col-12 p-2">
+			<div class="col-12 col-lg-6 p-2">
 				<div class="col-12">
 					كلمة المرور
 				</div>
@@ -43,19 +51,18 @@
 				</div>
 			</div>
 			
-			<div class="col-12 p-2">
+			<div class="col-12 col-lg-6 p-2">
 				<div class="col-12">
 					الصورة الشخصية
 				</div>
 				<div class="col-12 pt-3">
-					<input type="file" name="avatar"  class="form-control"  accept="image/*" >
+					<input type="file" name="avatar"  class="filepond"  accept="image/*" >
 				</div>
 				<div class="col-12 p-0">
 					
 				</div>
 			</div>
-
-			<div class="col-12 p-2">
+			<div class="col-12 col-lg-6 p-2">
 				<div class="col-12">
 					الهاتف
 				</div>
@@ -63,20 +70,21 @@
 					<input type="text" name="phone"   maxlength="190" class="form-control"  value="{{old('phone')}}" >
 				</div>
 			</div>
-			<div class="col-12 p-2">
+			@if(auth()->user()->can('user-roles-update'))
+			<div class="col-12 col-lg-6 p-2">
 				<div class="col-12">
 					الصلاحية
 				</div>
 				<div class="col-12 pt-3">
-					<select class="form-control" name="power">
-						<option selected hidden disabled >إختر الصلاحية</option>
-						<option @if(old('power')=="ADMIN") selected @endif value="ADMIN">مسؤول</option>
-						<option @if(old('power')=="EDITOR") selected @endif value="EDITOR">محرر</option>
-						<option @if(old('power')=="CONTRIBUTOR") selected @endif value="CONTRIBUTOR">مساهم</option>
+					<select class="form-control select2-select" name="roles[]" multiple required>
+						@foreach($roles as $role)
+							<option value="{{$role->id}}">{{$role->display_name}}</option>
+						@endforeach
 					</select>
 				</div>
 			</div>
-			<div class="col-12 p-2">
+			@endif
+			<div class="col-12 col-lg-6 p-2">
 				<div class="col-12">
 					نبذة
 				</div>
@@ -84,7 +92,7 @@
 					<textarea  name="bio" maxlength="5000" class="form-control" style="min-height:150px">{{old('bio')}}</textarea>
 				</div>
 			</div>
-			<div class="col-12 p-2">
+			<div class="col-12 col-lg-6 p-2">
 				<div class="col-12">
 					محظور
 				</div>

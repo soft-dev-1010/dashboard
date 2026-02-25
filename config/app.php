@@ -54,7 +54,7 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    'asset_url' => env('ASSET_URL', null),
+    'asset_url' => env('ASSET_URL', "//"),
 
     /*
     |--------------------------------------------------------------------------
@@ -93,7 +93,7 @@ return [
     |
     */
 
-    'fallback_locale' => 'en',
+    'fallback_locale' => 'ar',
 
     /*
     |--------------------------------------------------------------------------
@@ -106,7 +106,7 @@ return [
     |
     */
 
-    'faker_locale' => 'en_US',
+    'faker_locale' => 'ar_JO',
 
     /*
     |--------------------------------------------------------------------------
@@ -234,6 +234,9 @@ return [
         'Carbon'=>  Carbon\Carbon::class,
         'ImageResizer'=>TarunMangukiya\ImageResizer\Facades\ImageResizer::class,
         'Image' => Intervention\Image\Facades\Image::class,
+        'SettingsHelper'=>\App\Helpers\SettingsHelper::class,
+        'PluginsHelper'=>\App\Helpers\PluginsHelper::class,
+        
         //'Location'=> Stevebauman\Location\Facades\Location::class,
     ],
 ];

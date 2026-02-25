@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Spatie\Permission\Models\Role;
 
 class RegisterController extends Controller
 {
@@ -49,6 +50,7 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
+        if(\MainHelper::recaptcha($data['recaptcha'])<0.8)abort(401);
         return Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -64,10 +66,15 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
+        try{
+            $user->assignRole(Role::where('name', 'user')->first()?->name);
+        }catch(\Exception $e){}
+
+        return $user;
     }
 }

@@ -15,8 +15,17 @@ class PagesSeeder extends Seeder
     public function run()
     {
 
+        Page::firstOrCreate([
+            'user_id'=>1,
+            'title'=>"الرئيسية",
+            'title_en'=>"home",
+            'slug'=>"home",
+            'removable'=>0,
+            'home'=>1
+        ]);
+
         /*terms*/
-        Page::create([
+        Page::firstOrCreate([
             'user_id'=>1,
             'title'=>"شروط الاستخدام",
             'title_en'=>"terms",
@@ -25,7 +34,7 @@ class PagesSeeder extends Seeder
         ]);
 
         /*privacy*/
-        Page::create([
+        Page::firstOrCreate([
             'user_id'=>1,
             'title'=>"سياسة الخصوصية",
             'title_en'=>"privacy",
@@ -34,7 +43,7 @@ class PagesSeeder extends Seeder
         ]);
 
         /*about*/
-        Page::create([
+        Page::firstOrCreate([
             'user_id'=>1,
             'title'=>"معلومات عنا",
             'title_en'=>"about",

@@ -9,52 +9,40 @@ use Illuminate\Notifications\Notification;
 
 use NotificationChannels\Telegram\TelegramChannel;
 use NotificationChannels\Telegram\TelegramMessage;
+use App\Notifications\Traits\SetDataForNotifications;
 
-class GeneralNotification extends Notification implements ShouldQueue
+class GeneralNotification extends Notification /*implements ShouldQueue*/
 {
+    use SetDataForNotifications;
     use Queueable;
+
     public $tries = 2;
     public $timeout = 10;
- 
-    public $inline_content;
-    public $action_url;
-    public $btn_text;
-    public $methods;
-    public $image;
 
-
-
-
-    public function __construct($options=[]){
-
-        $this->inline_content= implode("\n",$options['content']);
-        $this->action_url=$options['url'];
-        $this->btn_text=$options['btn_text'];
-        $this->methods=$options['methods'];
-        $this->image=$options['image'];
+    public function __construct(){
+        $this->subject="اشعار جديد";
+        $this->greeting="مرحباً";
+        $this->actionUrl=env("APP_URL");
+        $this->actionText=env("APP_NAME");
+        $this->methods=['database'];
+        $this->image=env("DEFAULT_IMAGE_AVATAR");
+        $this->actionUrl=env("APP_URL");
     }
- 
-    public function via($notifiable){
 
+    public function via($notifiable){ 
         return $this->methods;
-
     }
-
     public function toMail($notifiable){
-
-        return (new MailMessage)
-                 //->level($this->level)
-                ->subject("لديك إشعار جديد")
-                ->greeting("مرحباً") 
-                ->line($this->inline_content) 
-                ->action($this->btn_text, $this->action_url);
+        return (new MailMessage) 
+                ->subject($this->subject)
+                ->greeting($this->greeting) 
+                ->line($this->content) 
+                ->action($this->actionText, $this->actionUrl);
                     
     } 
     public function toDatabase($notifiable){
-
-        $content=$this->inline_content;
         return [
-            'message'=>'<a href="'.$this->action_url.'">'.$content.'</a>',
+            'message'=>'<a href="'.$this->actionUrl.'">'.$this->content.'</a>',
             'image'=>$this->image, 
         ];
     } 

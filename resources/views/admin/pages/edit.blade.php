@@ -5,6 +5,7 @@
         <form id="validate-form" class="row" enctype="multipart/form-data" method="POST" action="{{route('admin.pages.update',$page)}}">
             @csrf
             @method("PUT")
+            <input type="hidden" name="temp_file_selector" id="temp_file_selector" value="{{uniqid()}}">
             <div class="col-12 col-lg-8 p-0 main-box">
                 <div class="col-12 px-0">
                     <div class="col-12 px-3 py-3">
@@ -43,13 +44,13 @@
                             الصورة الرئيسية
                         </div>
                         <div class="col-12 pt-3">
-                            <input type="file" name="image" class="form-control" accept="image/*">
+                            <input type="file" name="image" class="filepond" accept="image/*">
                         </div>
                         <div class="col-12 pt-3">
                             <img src="{{$page->image()}}" style="width:120px;">
                         </div>
                     </div>
-                    <div class="col-12  p-2">
+                    {{-- <div class="col-12  p-2">
                         <div class="col-12">
                             محتوى الصفحة
                         </div>
@@ -64,8 +65,8 @@
                         <div class="col-12 pt-3">
                             <textarea name="meta_description" class="form-control" style="min-height:150px">{{old('meta_description',$page)}}</textarea>
                         </div>
-                    </div>
-                    <div class="col-12 p-2">
+                    </div> --}}
+                    <div class="col-6 p-2">
                         <div class="col-12">
                             قابلة للحذف
                         </div>
@@ -73,6 +74,17 @@
                             <select class="form-control" name="removable">
                                 <option @if(old('removable',$page)=="1" ) selected @endif value="1">نعم</option>
                                 <option @if(old('removable',$page)=="0" ) selected @endif value="0">لا</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-6 p-2">
+                        <div class="col-12">
+                            الرئيسية
+                        </div>
+                        <div class="col-12 pt-3">
+                            <select class="form-control" name="home">
+                                <option @if(old('home',$page)=="1" ) selected @endif value="1">نعم</option>
+                                <option @if(old('home',$page)=="0" ) selected @endif value="0">لا</option>
                             </select>
                         </div>
                     </div>

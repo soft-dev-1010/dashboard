@@ -6,7 +6,7 @@
 		
 		<form id="validate-form" class="row" enctype="multipart/form-data" method="POST" action="{{route('admin.categories.store')}}">
 		@csrf
-
+		<input type="hidden" name="temp_file_selector" id="temp_file_selector" value="{{uniqid()}}">
 		<div class="col-12 col-lg-8 p-0 main-box">
 			<div class="col-12 px-0">
 				<div class="col-12 px-3 py-3">
@@ -39,7 +39,7 @@
 					الشعار
 				</div>
 				<div class="col-12 pt-3">
-					<input type="file" name="image"    class="form-control" accept="image/*">
+					<input type="file" name="image" class="filepond" accept="image/*">
 				</div>
 				<div class="col-12 pt-3">
 

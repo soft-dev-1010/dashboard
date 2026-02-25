@@ -19,7 +19,9 @@ class CreateRateLimitDetailsTable extends Migration
             $table->foreign('user_id')->references('id')->on("users")->onDelete('cascade');
             $table->unsignedBigInteger('rate_limit_id')->nullable();
             $table->foreign('rate_limit_id')->references('id')->on("rate_limits")->onDelete('cascade');
+            $table->text('query')->nullable();
             $table->string('url')->nullable()->index();
+            $table->string('ip')->index();
             $table->timestamps();
         });
     }
